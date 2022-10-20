@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.productivity_timer">
+    package="com.example.unit_converter">
    <application
-        android:label="productivity_timer"
+        android:label="unit_converter"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

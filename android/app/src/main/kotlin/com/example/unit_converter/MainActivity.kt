@@ -1,4 +1,4 @@
-package com.example.productivity_timer
+package com.example.unit_converter
 
 import io.flutter.embedding.android.FlutterActivity
 

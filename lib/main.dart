@@ -1,131 +1,202 @@
 import 'package:flutter/material.dart';
-import 'package:productivity_timer/settings.dart';
-import 'package:productivity_timer/timermodel.dart';
-import 'package:productivity_timer/widgets.dart';
-import 'package:percent_indicator/percent_indicator.dart';
-import './timer.dart';
 
 void main() {
-  runApp( MyApp());
+  runApp(const MyApp());
 }
-const double defaultPadding = 5.0;
-final CountDownTimer timer = CountDownTimer();
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class MyApp extends StatefulWidget {
+
+  const MyApp({Key? key}) : super(key: key);
+  @override
+  MyAppState createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> {
+  late double _numberFrom;
+  late String _resultMessage = '';
+  final Map<String, int> _measuresMap = {
+    'meters' : 0,
+    'kilometers' : 1,
+    'grams' : 2,
+    'kilograms' : 3,
+    'feet' : 4,
+    'miles' : 5,
+    'pounds (lbs)' : 6,
+    'ounces' : 7,
+  };
+  final dynamic _formulas = {
+    '0':[1,       0.001,      0,        0,          3.28084,  0.000621371,  0,          0],
+    '1':[1000,    1,          0,        0,          3280.84,  0.621371,     0,          0],
+    '2':[0,       0,          1,        0.0001,     0,        0,            0.00220462, 0.035274],
+    '3':[0,       0,          1000,     1,          0,        0,            2.20462,    35.274],
+    '4':[0.3048,  0.0003048,  0,        0,          1,        0.000189394,  0,          0],
+    '5':[1609.34, 1.60934,    0,        0,          5280,     1,            0,          0],
+    '6':[0,       0,          453.592,  0.453592,   0,        0,            1,          16],
+    '7':[0,       0,          28.3495,  0.0283495,  3.28084,  0,            0.0625,     1],
+  };
+  final List<String> _measures = [
+    'meters',
+    'kilometers',
+    'grams',
+    'kilograms',
+    'feet',
+    'miles',
+    'pounds (lbs)',
+    'ounces',
+  ];
+  String _startMeasure='meters';
+  String _convertedMeasure='meters';
+
+  @override
+  void initState() {
+    _numberFrom = 0;
+    super.initState();
+  }
+  final TextStyle inputStyle = TextStyle(
+    fontSize: 20,
+    color: Colors.blue[900],
+  );
+  final TextStyle labelStyle = TextStyle(
+    fontSize: 24,
+    color: Colors.grey[700],
+  );
+
   @override
   Widget build(BuildContext context) {
-    timer.startWork();
     return MaterialApp(
-      title: 'My Work Timer',
-      theme: ThemeData(
-        primarySwatch: Colors.blueGrey,
-      ),
-      home: TimerHomePage(),
-    );}
-
-  void emptyMethod() {}
-}
-
-
-class TimerHomePage extends StatelessWidget {
-  final double defaultPadding = 5.0;
-  final List<PopupMenuItem<String>> menuItems = [PopupMenuItem(value: 'Settings',child: Text('Settings'))];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+      title: 'Measures Converter',
+      home: Scaffold(
         appBar: AppBar(
-          title: Text('My work timer'),
-            actions: [
-              PopupMenuButton<String>(
-                  itemBuilder: (BuildContext context) {
-                  return menuItems.toList();
-                  },
-                  onSelected: (s) {
-                     if(s=='Settings') {
-                        goToSettings(context);
-                      }
-                  }
-              )]
+          title: Text('Measures Converter'),
         ),
-        body: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final double availableWidth = constraints.maxWidth;
-              return Column(children: [
-                Row(
-                  children: [
-                    Padding(padding: EdgeInsets.all(defaultPadding),),
+        body: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: SingleChildScrollView(
 
-                    Expanded(
-                        child: ProductivityButton(color: Color(0xffec156f),
-                            text: 'Work',
-                            size: 150,
-                            onPressed:  () => timer.startWork())),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
 
-                    Padding(padding: EdgeInsets.all(defaultPadding),),
+                Spacer(),
 
-                    Expanded(
-                        child: ProductivityButton(color: Color(0xff607D8B),
-                            text: 'Short Break',
-                            size: 150,
-                            onPressed:  () => timer.startBreak(true))),
-
-                    Padding(padding: EdgeInsets.all(defaultPadding),),
-
-                    Expanded(
-                        child: ProductivityButton(color: Color(0xff455A64),
-                            text: 'Long Break',
-                            size: 150,
-                            onPressed:() => timer.startBreak(false))),
-
-                    Padding(padding: EdgeInsets.all(defaultPadding),),
-                  ],
+                Text(
+                  'Value',
+                  style: labelStyle,
+                  textAlign: TextAlign.center,
                 ),
 
-                Expanded(
-                child: StreamBuilder(
-                  initialData: '00:00',
-                  stream: timer.stream(),
-                  builder: (BuildContext context, AsyncSnapshot snapshot) {
-                    TimerModel timer = (snapshot.data == '00:00') ? TimerModel('00:00', 1) : snapshot.data;
-                    return Expanded(
-                       child: CircularPercentIndicator(
-                         radius: availableWidth / 4,
-                         lineWidth: 10.0,
-                         percent: timer.percent,
-                         center: Text( timer.time, style: Theme.of(context).textTheme.headline4),
-                         progressColor: Color(0xff009688),
-                      ));
-                  })),
+                Spacer(),
 
-                Row(children: [
-                  Padding(padding: EdgeInsets.all(defaultPadding),),
+                TextField(
+                  style: inputStyle,
+                  decoration: InputDecoration(
+                    hintText: "Please insert the measure to be converted",
+                  ),
+                  onChanged: (text) {
+                    var rv = double.tryParse(text);
+                    if (rv != null) {
+                      setState(() {
+                        _numberFrom = rv;
+                      });
+                    }
+                  },
+                ),
 
-                  Expanded(child: ProductivityButton(color: Color(0xffec156f),
-                      text: 'Stop', size: 150, onPressed:  () => timer.stopTimer())),
+                Spacer(),
 
-                  Padding(padding: EdgeInsets.all(defaultPadding),),
+                Text(
+                  'From',
+                  style: labelStyle,
+                ),
 
-                  Expanded(child: ProductivityButton(color: Color(0xff009688),
-                      text: 'Restart', size: 150, onPressed:  () => timer.startTimer())),
+                DropdownButton(
+                  isExpanded: true,
+                  style: inputStyle,
+                  items: _measures.map((String value) {
+                    return DropdownMenuItem<String>(value: value, child:
+                    Text(value),);
+                  }).toList(),
 
-                  Padding(padding: EdgeInsets.all(defaultPadding),),
-                ],
-                )
+                  onChanged: (value) {
+                    setState(() {
+                      _startMeasure = value.toString();
+                    });
+                  },
 
-              ]
-              );
-            }
-        )
+                  value: _startMeasure
+                ),
+
+                Spacer(),
+
+                Text('To', style: labelStyle,),
+
+                Spacer(),
+
+                DropdownButton(
+                  isExpanded: true,
+                  style: inputStyle,
+                  items: _measures.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: inputStyle,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _convertedMeasure = value.toString();
+                    });
+                  },
+                  value: _convertedMeasure,
+                ),
+                Spacer(flex: 2,),
+
+                RaisedButton(
+                  child: Text('Convert', style: inputStyle),
+                  onPressed: () {
+                    if (_startMeasure.isEmpty || _convertedMeasure.isEmpty ||
+                        _numberFrom==0) {
+                      return;
+                    }
+                    else {
+                      convert(_numberFrom, _startMeasure, _convertedMeasure);
+                    }
+                  },
+                ),
+
+                Spacer(flex: 2,),
+
+                Text(
+                    (_resultMessage == null) ? '' : _resultMessage,
+                    style: labelStyle
+                ),
+
+                Spacer(flex: 8,)
+
+            ],
+            ))
+          )
+          )
+
     );
+
   }
-  void emptyMethod() {}
-  void goToSettings(BuildContext context) {
-    Navigator.push(
-        context, MaterialPageRoute(builder: (context) =>
-        SettingsScreen()));
+
+  void convert(double value, String from, String to) {
+    int? nFrom = _measuresMap[from];
+    int? nTo = _measuresMap[to];
+    var multiplier = _formulas[nFrom.toString()][nTo];
+    var result = value * multiplier;
+    if (result == 0) {
+      _resultMessage = 'This conversion cannot be performed';
+    }
+    else {
+      _resultMessage = '${_numberFrom.toString()} $_startMeasure are ${result.toString()} $_convertedMeasure';
+    }
+    setState(() {
+      _resultMessage = _resultMessage;
+    });
   }
 }
-
-
